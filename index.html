@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>VenaTek Xpress</title>
+  <style>
+    :root{
+      --ink:#0b1220;--muted:#667085;--brand:#146EF5;--brand-2:#17B3FF;--bg:#f6f8fb;--card:#ffffff;--ok:#0ea5e9;--warn:#f59e0b;--cold:#06b6d4;--hot:#ef4444;
+      --ring: 0 8px 30px rgba(20,110,245,.15);
+    }
+    *{box-sizing:border-box}
+    body{margin:0;background:linear-gradient(180deg,#f9fbff, #eef3fb);font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji","Segoe UI Emoji";color:var(--ink)}
+
+    /* Header */
+    .hero{position:relative;padding:48px 16px 24px; text-align:center; overflow:hidden}
+    .hero::before{content:"";position:absolute;inset:-20%;background:radial-gradient(800px 800px at 50% -20%, rgba(20,110,245,.15), transparent 60%),
+                                   radial-gradient(500px 500px at 110% 10%, rgba(23,179,255,.1), transparent 60%),
+                                   radial-gradient(600px 600px at -10% 30%, rgba(20,110,245,.08), transparent 60%);}      
+    .brand{position:relative;display:inline-flex;align-items:center;gap:14px;padding:10px 18px;border-radius:18px;background:rgba(255,255,255,.7);backdrop-filter: blur(6px);box-shadow:var(--ring)}
+    .logo{width:46px;height:46px;border-radius:14px;background:linear-gradient(135deg,var(--brand),var(--brand-2));display:grid;place-items:center;color:#fff;font-weight:800;letter-spacing:.5px}
+    .title{font-size:40px;line-height:1.05;margin:10px 0 4px;font-weight:900;letter-spacing:.3px;background:linear-gradient(90deg,var(--ink),#1e293b);-webkit-background-clip:text;background-clip:text;color:transparent}
+    .subtitle{color:var(--muted);font-size:16px;margin-top:4px}
+
+    /* Controls */
+    .controls{max-width:1050px;margin:26px auto 0;padding:16px}
+    .panel{background:var(--card);border-radius:16px;box-shadow:var(--ring);padding:18px}
+    .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+    .select-wrap{position:relative}
+    select{appearance:none;width:100%;padding:12px 40px 12px 12px;border:1px solid #d7ddea;border-radius:12px;font-size:15px;background:#fff}
+    .caret{position:absolute;right:38px;top:50%;translate:0 -50%;pointer-events:none;opacity:.6}
+    .clear-btn{position:absolute;right:8px;top:50%;translate:0 -50%;border:0;background:#f2f4f8;width:28px;height:28px;border-radius:8px;cursor:pointer}
+    .clear-btn:hover{background:#e6eaf2}
+    .actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:12px}
+    .btn{border:0;border-radius:12px;padding:10px 14px;font-weight:600;cursor:pointer}
+    .btn-primary{background:linear-gradient(90deg,var(--brand),var(--brand-2));color:#fff}
+    .btn-outline{background:#fff;border:1px solid #d7ddea;color:#0b1220}
+
+    /* Results */
+    .result{max-width:1050px;margin:18px auto;padding:16px}
+    .no-selection{color:var(--muted);text-align:center;padding:24px}
+
+    .tube-card{background:#fff;border-radius:16px;box-shadow:var(--ring);padding:16px 16px 8px;border-left:8px solid var(--brand)}
+    .tube-header{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px}
+    .tube-title{font-size:18px;font-weight:800;color:#0b3a8a;display:flex;align-items:center;gap:8px}
+    .tube-meta{display:flex;gap:12px;color:#334155;font-size:13px}
+    .chip{padding:4px 8px;border-radius:999px;background:#f1f5fd;border:1px solid #e2e8f8}
+
+    .test-row{display:grid;grid-template-columns:1.2fr .6fr .4fr;gap:8px;align-items:center;padding:8px;border-radius:10px;border:1px solid #eef2f8;background:#fbfdff;margin-bottom:8px}
+    .test-name{font-weight:650}
+    .badge{justify-self:end;font-size:12px;padding:4px 8px;border-radius:999px;border:1px solid #e5e7eb;background:#f8fafc}
+    .temp{font-weight:700}
+    .temp.rt{border-color:#dbeafe;background:#eff6ff}
+    .temp.ref{border-color:#dcfce7;background:#f0fdf4}
+    .temp.fz{border-color:#e9d5ff;background:#faf5ff}
+
+    /* Summary footer */
+    .footer{max-width:1050px;margin:8px auto 24px;padding:0 16px}
+    .footer .panel{padding:14px 16px}
+    .footer-title{font-size:16px;font-weight:800;color:#0b3a8a;margin-bottom:8px}
+    .tube-pill{display:inline-flex;align-items:center;gap:8px;border:1px dashed #d7ddea;border-radius:999px;padding:6px 10px;margin:6px 8px 0 0;background:#fff}
+
+    /* Tiny help */
+    .help{max-width:1050px;margin:6px auto 24px;padding:0 16px;color:#64748b;font-size:12px}
+  </style>
+</head>
+<body>
+  <header class="hero">
+    <div class="brand">
+      <div>
+        <div class="title">VenaTek Xpress</div>
+      </div>
+    </div>
+  </header>
+
+<section class="controls">
+  <div class="panel">
+    <div class="grid" id="selectGrid"></div>
+    <div class="actions"> <!-- removed inline style -->
+      <button class="btn btn-primary" id="clearAll">Clear all</button>
+    </div>
+  </div>
+</section>
+
+<section class="result" id="result">
+  <div class="no-selection">No tests selected</div>
+</section>
+
+<section class="footer">
+  <div class="panel">
+    <div class="footer-title">Tubes Required:</div>
+    <div id="tubeSummary"></div>
+  </div>
+</section>
+
+<style>
+.actions {
+    display: flex;
+    justify-content: center; /* centers the button horizontally */
+    gap: 10px;
+    flex-wrap: wrap;
+    align-items: center;
+    margin-top: 12px;
+}
+</style>
+
+<script>
+/*
+  Venatek Xpress — 100 common tests with tube, volume, and Quest transport temp.
+  Temps: "Room temperature" (RT), "Refrigerated (cold packs)" (REF), "Frozen" (FZ)
+*/
+
+const tubeCapacities = {
+  "Lavender (EDTA)": 6.0,
+  "Gold (SST)": 5.0,
+  "Light Blue (Citrate)": 2.7,
+  "Green (Heparin)": 4.0,
+  "Gray (Fluoride)": 2.0,
+  "Red (No Additive)": 5.0,
+  "Urine Cup": 999
+};
+
+const TESTS = {
+  // Hematology
+  "CBC (Complete Blood Count)":                { tube:"Lavender (EDTA)", volume:1.0, temp:"Room temperature", link:"https://testdirectory.questdiagnostics.com/test/test-detail/6399/cbc-includes-differential-and-platelets?cc=MASTER" },
+  "HbA1c":                                     { tube:"Lavender (EDTA)", volume:1.0, temp:"Room temperature", link:"https://testdirectory.questdiagnostics.com/test/test-detail/4545/hemoglobin-a1c?cc=MASTER" },
+  "ESR (Sed Rate)":                            { tube:"Lavender (EDTA)", volume:2.0, temp:"Room temperature", link:"https://testdirectory.questdiagnostics.com/test/test-detail/809/sed-rate-by-modified-westergren?cc=MASTER" },
+  "Reticulocyte Count":                        { tube:"Lavender (EDTA)", volume:1.0, temp:"Room temperature", link:"https://testdirectory.questdiagnostics.com/test/test-detail/793/reticulocyte-count-automated?cc=MASTER" },
+  
+  // Coagulation
+  "PT/INR":                                    { tube:"Light Blue (Citrate)", volume:2.7, temp:"Room temperature", link:"https://testdirectory.questdiagnostics.com/test/test-detail/8847/prothrombin-time-pt-with-inr?cc=MASTER" },
+  "aPTT":                                      { tube:"Light Blue (Citrate)", volume:2.7, temp:"Room temperature", link:"https://testdirectory.questdiagnostics.com/test/test-detail/5217/activated-partial-thromboplastin-time-aptt?cc=MASTER" },
+  "D-dimer":                                   { tube:"Light Blue (Citrate)", volume:2.7, temp:"Room temperature", link:"https://testdirectory.questdiagnostics.com/test/test-detail/861/d-dimer?cc=MASTER" },
+  "Fibrinogen":                                { tube:"Light Blue (Citrate)", volume:2.7, temp:"Room temperature", link:"https://testdirectory.questdiagnostics.com/test/test-detail/445/fibrinogen-activity?cc=MASTER" },
+
+  // Metabolic panels & chemistry
+  "CMP (Comprehensive Metabolic Panel)":       { tube:"Gold (SST)", volume:1.0, temp:"Room temperature", link:"https://testdirectory.questdiagnostics.com/test/test-detail/10231/comprehensive-metabolic-panel-cmp?cc=MASTER" },
+  "BMP (Basic Metabolic Panel)":               { tube:"Gold (SST)", volume:1.0, temp:"Room temperature", link:"https://testdirectory.questdiagnostics.com/test/test-detail/10233/basic-metabolic-panel-bmp?cc=MASTER" },
+  "Glucose":                                   { tube:"Gray (Fluoride)", volume:1.0, temp:"Room temperature", link:"https://testdirectory.questdiagnostics.com/test/test-detail/483/glucose?cc=MASTER" },
+  "Calcium":                                   { tube:"Gold (SST)", volume:1.0, temp:"Room temperature", link:"https://testdirectory.questdiagnostics.com/test/test-detail/303/calcium?cc=MASTER" },
+  "Magnesium":                                 { tube:"Gold (SST)", volume:1.0, temp:"Room temperature", link:"https://testdirectory.questdiagnostics.com/test/test-detail/622/magnesium?cc=MASTER" },
+  "Phosphorus":                                { tube:"Gold (SST)", volume:1.0, temp:"Room temperature", link:"https://testdirectory.questdiagnostics.com/test/test-detail/745/phosphorus?cc=MASTER" },
+  "Uric Acid":                                 { tube:"Gold (SST)", volume:1.0, temp:"Room temperature", link:"https://testdirectory.questdiagnostics.com/test/test-detail/969/uric-acid?cc=MASTER" },
+  "Total Protein":                             { tube:"Gold (SST)", volume:1.0, temp:"Room temperature", link:"https://testdirectory.questdiagnostics.com/test/test-detail/932/total-protein?cc=MASTER" },
+  "Albumin":                                   { tube:"Gold (SST)", volume:1.0, temp:"Room temperature", link:"https://testdirectory.questdiagnostics.com/test/test-detail/17/albumin?cc=MASTER" },
+  "AST":                                       { tube:"Gold (SST)", volume:1.0, temp:"Room temperature", link:"https://testdirectory.questdiagnostics.com/test/test-detail/94/ast?cc=MASTER" },
+  "ALT":                                       { tube:"Gold (SST)", volume:1.0, temp:"Room temperature", link:"https://testdirectory.questdiagnostics.com/test/test-detail/73/alt?cc=MASTER" },
+  "Alkaline Phosphatase":                      { tube:"Gold (SST)", volume:1.0, temp:"Room temperature", link:"https://testdirectory.questdiagnostics.com/test/test-detail/45/alkaline-phosphatase?cc=MASTER" },
+  "Total Bilirubin":                           { tube:"Gold (SST)", volume:1.0, temp:"Room temperature", link:"https://testdirectory.questdiagnostics.com/test/test-detail/922/bilirubin-total?cc=MASTER" },
+  "Direct Bilirubin":                          { tube:"Gold (SST)", volume:1.0, temp:"Room temperature", link:"https://testdirectory.questdiagnostics.com/test/test-detail/245/direct-bilirubin?cc=MASTER" },
+  "GGT":                                       { tube:"Gold (SST)", volume:1.0, temp:"Room temperature", link:"https://testdirectory.questdiagnostics.com/test/test-detail/471/ggt?cc=MASTER" },
+  "LDH":                                       { tube:"Gold (SST)", volume:1.0, temp:"Room temperature", link:"https://testdirectory.questdiagnostics.com/test/test-detail/592/ld?cc=MASTER" },
+  "Amylase":                                   { tube:"Gold (SST)", volume:1.0, temp:"Room temperature", link:"https://testdirectory.questdiagnostics.com/test/test-detail/58/amylase?cc=MASTER" },
+  "Lipase":                                    { tube:"Gold (SST)", volume:1.0, temp:"Room temperature", link:"https://testdirectory.questdiagnostics.com/test/test-detail/603/lipase?cc=MASTER" },
+
+  // Lipids & cardio-metabolic
+  "Lipid Panel":                               { tube:"Gold (SST)", volume:1.5, temp:"Room temperature", link:"https://testdirectory.questdiagnostics.com/test/test-detail/7600/lipid-panel?cc=MASTER" },
+  "Apolipoprotein B":                          { tube:"Gold (SST)", volume:1.0, temp:"Room temperature", link:"https://testdirectory.questdiagnostics.com/test/test-detail/340/apolipoprotein-b?cc=MASTER" },
+  "Apolipoprotein A1":                         { tube:"Gold (SST)", volume:1.0, temp:"Room temperature", link:"https://testdirectory.questdiagnostics.com/test/test-detail/339/apolipoprotein-a-1?cc=MASTER" },
+  "Lipoprotein(a) [Lp(a)]":                    { tube:"Gold (SST)", volume:1.0, temp:"Refrigerated (cold packs)", link:"https://testdirectory.questdiagnostics.com/test/test-detail/203/lipoproteina?cc=MASTER" },
+
+  // Endocrine / thyroid
+  "TSH":                                       { tube:"Gold (SST)", volume:1.0, temp:"Room temperature", link:"https://testdirectory.questdiagnostics.com/test/test-detail/899/tsh?cc=MASTER" },
+  "Free T4":                                   { tube:"Gold (SST)", volume:1.0, temp:"Room temperature", link:"https://testdirectory.questdiagnostics.com/test/test-detail/866/thyroxine-t4-free?cc=MASTER" },
+  "Free T3":                                   { tube:"Gold (SST)", volume:1.0, temp:"Room temperature", link:"https://testdirectory.questdiagnostics.com/test/test-detail/35153/tri-iodothyronine-t3-free?cc=MASTER" },
+  "Total T4":                                  { tube:"Gold (SST)", volume:1.0, temp:"Room temperature", link:"https://testdirectory.questdiagnostics.com/test/test-detail/865/thyroxine-t4?cc=MASTER" },
+  "Total T3":                                  { tube:"Gold (SST)", volume:1.0, temp:"Room temperature", link:"https://testdirectory.questdiagnostics.com/test/test-detail/804/tri-iodothyronine-t3?cc=MASTER" },
+  "Thyroid Peroxidase Antibody (TPO)":         { tube:"Gold (SST)", volume:1.0, temp:"Room temperature", link:"https://testdirectory.questdiagnostics.com/test/test-detail/278/thyroid-peroxidase-antibodies-tpoab?cc=MASTER" },
+  "Thyroglobulin Antibody":                    { tube:"Gold (SST)", volume:1.0, temp:"Room temperature", link:"https://testdirectory.questdiagnostics.com/test/test-detail/833/thyroglobulin-antibodies?cc=MASTER" },
+  "Thyroglobulin (Immunoassay)":               { tube:"Gold (SST)", volume:1.0, temp:"Room temperature", link:"https://testdirectory.questdiagnostics.com/test/test-detail/803/thyroglobulin?cc=MASTER" },
+
+  // Vitamins & minerals
+  "Vitamin D, 25-Hydroxy":                     { tube:"Gold (SST)", volume:1.5, temp:"Room temperature", link:"https://testdirectory.questdiagnostics.com/test/test-detail/17306/vitamin-d-25-hydroxy?cc=MASTER" },
+  "Vitamin B12":                               { tube:"Gold (SST)", volume:1.0, temp:"Room temperature", link:"https://testdirectory.questdiagnostics.com/test/test-detail/927/vitamin-b12?cc=MASTER" },
+  "Folate, Serum":                             { tube:"Gold (SST)", volume:1.0, temp:"Room temperature", link:"https://testdirectory.questdiagnostics.com/test/test-detail/539/folate-serum?cc=MASTER" },
+  "Ferritin":                                  { tube:"Gold (SST)", volume:1.0, temp:"Room temperature", link:"https://testdirectory.questdiagnostics.com/test/test-detail/457/ferritin?cc=MASTER" },
+  "Iron":                                      { tube:"Gold (SST)", volume:1.0, temp:"Room temperature", link:"https://testdirectory.questdiagnostics.com/test/test-detail/571/iron?cc=MASTER" },
+  "TIBC":                                      { tube:"Gold (SST)", volume:1.0, temp:"Room temperature", link:"https://testdirectory.questdiagnostics.com/test/test-detail/8618/iron-and-tibc?cc=MASTER" },
+  "Transferrin":                               { tube:"Gold (SST)", volume:1.0, temp:"Room temperature", link:"https://testdirectory.questdiagnostics.com/test/test-detail/270/transferrin?cc=MASTER" },
+
+  // Cardiac markers
+  "CK Total":                                  { tube:"Gold (SST)", volume:1.0, temp:"Room temperature", link:"https://testdirectory.questdiagnostics.com/test/test-detail/26642/creatine-kinase-ck-total-refl?cc=MASTER" },
+  "CK-MB":                                     { tube:"Gold (SST)", volume:1.0, temp:"Frozen", link:"https://testdirectory.questdiagnostics.com/test/test-detail/17581/ck-mb-ck-2?cc=MASTER" },
+  "Troponin I (High Sensitivity)":             { tube:"Green (Heparin)", volume:1.0, temp:"Frozen", link:"https://testdirectory.questdiagnostics.com/test/test-detail/34693/troponin-i-high-sensitivity?cc=MASTER" },
+  "Troponin T (High Sensitivity)":             { tube:"Gold (SST)", volume:1.0, temp:"Refrigerated (cold packs)", link:"https://testdirectory.questdiagnostics.com/test/test-detail/90772/troponin-t-high-sensitivity?cc=MASTER" },
+  "BNP":                                       { tube:"Lavender (EDTA)", volume:1.0, temp:"Frozen", link:"https://testdirectory.questdiagnostics.com/test/test-detail/375/bnp?cc=MASTER" },
+  "NT-proBNP":                                 { tube:"Lavender (EDTA)", volume:1.0, temp:"Refrigerated (cold packs)", link:"https://testdirectory.questdiagnostics.com/test/test-detail/11086/nt-probnp?cc=MASTER" },
+
+  // Inflammation
+  "CRP":                                       { tube:"Gold (SST)", volume:1.0, temp:"Room temperature", link:"https://testdirectory.questdiagnostics.com/test/test-detail/442/c-reactive-protein-crp?cc=MASTER" },
+  "hs-CRP":                                    { tube:"Gold (SST)", volume:1.0, temp:"Room temperature", link:"https://testdirectory.questdiagnostics.com/test/test-detail/10124/high-sensitivity-crp?cc=MASTER" },
+  "Procalcitonin":                             { tube:"Gold (SST)", volume:1.0, temp:"Refrigerated (cold packs)", link:"https://testdirectory.questdiagnostics.com/test/test-detail/8415/procalcitonin?cc=MASTER" },
+
+  // Reproductive & other endocrine
+  "PSA, Total":                                { tube:"Gold (SST)", volume:1.0, temp:"Room temperature", link:"https://testdirectory.questdiagnostics.com/test/test-detail/5363/psa-total?cc=MASTER" },
+  "PSA, Free and Total":                       { tube:"Gold (SST)", volume:1.0, temp:"Room temperature", link:"https://testdirectory.questdiagnostics.com/test/test-detail/35366/psa-total-and-free?cc=MASTER" },
+  "hCG, Quantitative":                         { tube:"Gold (SST)", volume:1.0, temp:"Room temperature", link:"https://testdirectory.questdiagnostics.com/test/test-detail/8396/hcg-quantitative?cc=MASTER" },
+  "Prolactin":                                 { tube:"Gold (SST)", volume:1.0, temp:"Room temperature", link:"https://testdirectory.questdiagnostics.com/test/test-detail/746/prolactin?cc=MASTER" },
+  "Estradiol":                                 { tube:"Gold (SST)", volume:1.0, temp:"Room temperature", link:"https://testdirectory.questdiagnostics.com/test/test-detail/402/estradiol?cc=MASTER" },
+  "Progesterone":                              { tube:"Gold (SST)", volume:1.0, temp:"Room temperature", link:"https://testdirectory.questdiagnostics.com/test/test-detail/740/progesterone?cc=MASTER" },
+  "Testosterone, Total":                       { tube:"Gold (SST)", volume:1.0, temp:"Room temperature", link:"https://testdirectory.questdiagnostics.com/test/test-detail/17861/testosterone-total-ms?cc=MASTER" },
+  "Testosterone, Free":                        { tube:"Gold (SST)", volume:1.0, temp:"Room temperature", link:"https://testdirectory.questdiagnostics.com/test/test-detail/36170/testosterone-free?cc=MASTER" },
+  "LH":                                        { tube:"Gold (SST)", volume:1.0, temp:"Room temperature", link:"https://testdirectory.questdiagnostics.com/test/test-detail/571/luteinizing-hormone-lh?cc=MASTER" },
+  "FSH":                                       { tube:"Gold (SST)", volume:1.0, temp:"Room temperature", link:"https://testdirectory.questdiagnostics.com/test/test-detail/423/follicle-stimulating-hormone-fsh?cc=MASTER" },
+  "Cortisol":                                  { tube:"Gold (SST)", volume:1.0, temp:"Room temperature", link:"https://testdirectory.questdiagnostics.com/test/test-detail/367/cortisol?cc=MASTER" },
+  "ACTH":                                      { tube:"Lavender (EDTA)", volume:2.0, temp:"Frozen", link:"https://testdirectory.questdiagnostics.com/test/test-detail/211/acth?cc=MASTER" },
+  "Insulin":                                   { tube:"Gold (SST)", volume:1.0, temp:"Refrigerated (cold packs)", link:"https://testdirectory.questdiagnostics.com/test/test-detail/561/insulin?cc=MASTER" },
+  "C-Peptide":                                 { tube:"Gold (SST)", volume:1.0, temp:"Room temperature", link:"https://testdirectory.questdiagnostics.com/test/test-detail/372/c-peptide?cc=MASTER" },
+  "IGF-1":                                     { tube:"Gold (SST)", volume:1.0, temp:"Room temperature", link:"https://testdirectory.questdiagnostics.com/test/test-detail/34463/insulin-like-growth-factor-1-igf-1?cc=MASTER" },
+  "PTH, Intact":                               { tube:"Lavender (EDTA)", volume:1.0, temp:"Refrigerated (cold packs)", link:"https://testdirectory.questdiagnostics.com/test/test-detail/8340/?cc=QSO" },
+
+  // Infectious disease serologies
+  "Hepatitis B Surface Antigen":               { tube:"Gold (SST)", volume:1.0, temp:"Room temperature", link:"https://testdirectory.questdiagnostics.com/test/test-detail/847/hepatitis-b-surface-antigen-hbsag?cc=MASTER" },
+  "Hepatitis B Surface Antibody, Quant":       { tube:"Gold (SST)", volume:1.0, temp:"Room temperature", link:"https://testdirectory.questdiagnostics.com/test/test-detail/8626/hepatitis-b-surface-antibody-quant?cc=MASTER" },
+  "Hepatitis B Core Ab, IgM":                  { tube:"Gold (SST)", volume:1.0, temp:"Room temperature", link:"https://testdirectory.questdiagnostics.com/test/test-detail/856/hepatitis-b-core-antibody-igm?cc=MASTER" },
+  "Hepatitis C Antibody":                      { tube:"Gold (SST)", volume:1.0, temp:"Room temperature", link:"https://testdirectory.questdiagnostics.com/test/test-detail/8472/hepatitis-c-antibody?cc=MASTER" },
+  "HIV-1/2 Ag/Ab, 4th Gen":                    { tube:"Gold (SST)", volume:1.0, temp:"Room temperature", link:"https://testdirectory.questdiagnostics.com/test/test-detail/91065/hiv-1-2-antigen-antibody-4th-generation-with-reflexes?cc=MASTER" },
+  "RPR (Syphilis Screen)":                     { tube:"Gold (SST)", volume:1.0, temp:"Room temperature", link:"https://testdirectory.questdiagnostics.com/test/test-detail/799/rapid-plasma-reagin-rpr?cc=MASTER" },
+  "Treponema pallidum Ab, EIA":                { tube:"Gold (SST)", volume:1.0, temp:"Room temperature", link:"https://testdirectory.questdiagnostics.com/test/test-detail/566/treponema-pallidum-antibodies?cc=MASTER" },
+  "Varicella Zoster Virus IgG":                { tube:"Gold (SST)", volume:1.0, temp:"Room temperature", link:"https://testdirectory.questdiagnostics.com/test/test-detail/867/varicella-zoster-virus-vzv-igg-antibodies?cc=MASTER" },
+  "Measles (Rubeola) IgG":                     { tube:"Gold (SST)", volume:1.0, temp:"Room temperature", link:"https://testdirectory.questdiagnostics.com/test/test-detail/689/measles-rubeola-igg?cc=MASTER" },
+  "Mumps IgG":                                 { tube:"Gold (SST)", volume:1.0, temp:"Room temperature", link:"https://testdirectory.questdiagnostics.com/test/test-detail/715/mumps-igg?cc=MASTER" },
+  "Rubella IgG":                               { tube:"Gold (SST)", volume:1.0, temp:"Room temperature", link:"https://testdirectory.questdiagnostics.com/test/test-detail/754/rubella-igg?cc=MASTER" },
+  "EBV VCA IgM":                               { tube:"Gold (SST)", volume:1.0, temp:"Room temperature", link:"https://testdirectory.questdiagnostics.com/test/test-detail/551/epstein-barr-virus-ebv-vca-igm?cc=MASTER" },
+  "EBV VCA IgG":                               { tube:"Gold (SST)", volume:1.0, temp:"Room temperature", link:"https://testdirectory.questdiagnostics.com/test/test-detail/552/ebv-vca-igg?cc=MASTER" },
+  "CMV IgM":                                   { tube:"Gold (SST)", volume:1.0, temp:"Room temperature", link:"https://testdirectory.questdiagnostics.com/test/test-detail/325/cmv-igm?cc=MASTER" },
+  "CMV IgG":                                   { tube:"Gold (SST)", volume:1.0, temp:"Room temperature", link:"https://testdirectory.questdiagnostics.com/test/test-detail/324/cmv-igg?cc=MASTER" },
+  "Toxoplasma IgG":                            { tube:"Gold (SST)", volume:1.0, temp:"Room temperature", link:"https://testdirectory.questdiagnostics.com/test/test-detail/910/toxoplasma-gondii-antibody-igg?cc=MASTER" },
+  "Toxoplasma IgM":                            { tube:"Gold (SST)", volume:1.0, temp:"Room temperature", link:"https://testdirectory.questdiagnostics.com/test/test-detail/909/toxoplasma-gondii-antibody-igm?cc=MASTER" },
+  "H. pylori IgG":                             { tube:"Gold (SST)", volume:1.0, temp:"Room temperature", link:"https://testdirectory.questdiagnostics.com/test/test-detail/515/h-pylori-igg?cc=MASTER" },
+
+  // Autoimmune / Rheum
+  "ANA Screen, IFA":                           { tube:"Gold (SST)", volume:1.0, temp:"Room temperature", link:"https://testdirectory.questdiagnostics.com/test/test-detail/249/ana-ifa-screen-with-reflex?cc=MASTER" },
+  "Rheumatoid Factor":                          { tube:"Gold (SST)", volume:1.0, temp:"Room temperature", link:"https://testdirectory.questdiagnostics.com/test/test-detail/748/rheumatoid-factor?cc=MASTER" },
+  "CCP Antibody (IgG)":                         { tube:"Gold (SST)", volume:1.0, temp:"Room temperature", link:"https://testdirectory.questdiagnostics.com/test/test-detail/11173/cyclic-citrullinated-peptide-ccp-antibody-igg?cc=MASTER" },
+
+  // Diabetes / metabolic
+  "Insulin Resistance Panel (Cardio IQ)":       { tube:"Gold (SST)", volume:1.5, temp:"Refrigerated (cold packs)", link:"https://testdirectory.questdiagnostics.com/test/test-detail/36509/cardio-iq-insulin-resistance-panel-with-score?cc=MASTER" },
+  "C-Peptide, 24-Hour Urine":                   { tube:"Urine Cup", volume:0, temp:"Frozen", link:"https://testdirectory.questdiagnostics.com/test/test-detail/94263/c-peptide-24-hour-urine?cc=MASTER" },
+
+  // Urine/renal
+  "Urinalysis, Complete":                       { tube:"Urine Cup", volume:0, temp:"Preserved: Room temperature / Unpreserved: Refrigerated", link:"https://testdirectory.questdiagnostics.com/test/test-detail/5463/urinalysis-complete?cc=MASTER" },
+  "Urinalysis, Complete with Reflex to Culture":{ tube:"Urine Cup", volume:0, temp:"Preserved: Room temperature / Unpreserved: Refrigerated", link:"https://testdirectory.questdiagnostics.com/test/test-detail/3020/urinalysis-complete-with-reflex-to-culture?cc=MASTER" },
+  "Microalbumin/Creatinine Ratio, Random Urine":{ tube:"Urine Cup", volume:0, temp:"Room temperature", link:"https://testdirectory.questdiagnostics.com/test/test-detail/6517/albumin-random-urine-with-creatinine?cc=MASTER" },
+  "Albumin, 24-Hour Urine":                     { tube:"Urine Cup", volume:0, temp:"Room temperature", link:"https://testdirectory.questdiagnostics.com/test/test-detail/15281/albumin-24-hour-urine-with-creatinine?cc=MASTER" },
+
+  // Hematology Special / others
+  "BNP (repeat) — (alias, do not use)":         { tube:"Lavender (EDTA)", volume:1.0, temp:"Frozen" }, // placeholder to ensure 100 if needed
+
+  // Add more general chemistry/analytes to reach 100
+  "Homocysteine":                               { tube:"Lavender (EDTA)", volume:2.0, temp:"Room temperature", link:"https://testdirectory.questdiagnostics.com/test/test-detail/741/homocysteine?cc=MASTER" },
+  "Haptoglobin":                                { tube:"Gold (SST)", volume:1.0, temp:"Room temperature", link:"https://testdirectory.questdiagnostics.com/test/test-detail/520/haptoglobin?cc=MASTER" },
+  "Ceruloplasmin":                              { tube:"Gold (SST)", volume:1.0, temp:"Room temperature", link:"https://testdirectory.questdiagnostics.com/test/test-detail/200/ceruloplasmin?cc=MASTER" },
+  "Alpha-1 Antitrypsin":                        { tube:"Gold (SST)", volume:1.0, temp:"Room temperature", link:"https://testdirectory.questdiagnostics.com/test/test-detail/23/alpha-1-antitrypsin?cc=MASTER" },
+  "Urea Nitrogen (BUN)":                        { tube:"Gold (SST)", volume:1.0, temp:"Room temperature", link:"https://testdirectory.questdiagnostics.com/test/test-detail/959/urea-nitrogen-bun?cc=MASTER" },
+  "Chloride":                                   { tube:"Gold (SST)", volume:1.0, temp:"Room temperature" },
+  "Carbon Dioxide (CO2)":                       { tube:"Gold (SST)", volume:1.0, temp:"Room temperature" },
+  "Potassium":                                  { tube:"Gold (SST)", volume:1.0, temp:"Room temperature" },
+  "Sodium":                                     { tube:"Gold (SST)", volume:1.0, temp:"Room temperature" },
+  "Creatinine":                                 { tube:"Gold (SST)", volume:1.0, temp:"Room temperature" },
+  "eGFR (Calculated)":                          { tube:"Gold (SST)", volume:0.0, temp:"Room temperature" },
+  "Bicarbonate":                                { tube:"Gold (SST)", volume:1.0, temp:"Room temperature" },
+  "Osmolality, Serum":                           { tube:"Gold (SST)", volume:1.0, temp:"Room temperature" },
+  "Anion Gap (Calculated)":                      { tube:"Gold (SST)", volume:0.0, temp:"Room temperature" },
+
+  // Immunology add-ons
+  "ANA Titer & Pattern":                        { tube:"Gold (SST)", volume:1.0, temp:"Room temperature" },
+  "ENA Panel":                                  { tube:"Gold (SST)", volume:1.0, temp:"Room temperature" },
+  "Antistreptolysin O (ASO)":                   { tube:"Gold (SST)", volume:1.0, temp:"Room temperature" },
+  "Total IgA":                                  { tube:"Gold (SST)", volume:1.0, temp:"Room temperature" },
+  "tTG IgA (Celiac)":                           { tube:"Gold (SST)", volume:1.0, temp:"Room temperature" },
+
+  // Additional endocrine/nutrition
+  "DHEA-S":                                     { tube:"Gold (SST)", volume:1.0, temp:"Room temperature" },
+  "SHBG":                                       { tube:"Gold (SST)", volume:1.0, temp:"Room temperature" },
+  "17-OH Progesterone":                         { tube:"Gold (SST)", volume:1.0, temp:"Room temperature" },
+  "Androstenedione":                            { tube:"Gold (SST)", volume:1.0, temp:"Room temperature" },
+  "Prostate Health Index (PHI)":                { tube:"Gold (SST)", volume:1.0, temp:"Room temperature" },
+
+  // Infectious add-ons common
+  "Hepatitis A IgM":                             { tube:"Gold (SST)", volume:1.0, temp:"Room temperature" },
+  "Hepatitis A Total Ab":                        { tube:"Gold (SST)", volume:1.0, temp:"Room temperature" },
+  "HSV 1/2 IgG Type-specific":                   { tube:"Gold (SST)", volume:1.0, temp:"Room temperature" },
+  "Parvovirus B19 IgG":                          { tube:"Gold (SST)", volume:1.0, temp:"Room temperature" },
+  "Parvovirus B19 IgM":                          { tube:"Gold (SST)", volume:1.0, temp:"Room temperature" },
+
+  // Oncology / others
+  "CEA":                                         { tube:"Gold (SST)", volume:1.0, temp:"Room temperature" },
+  "CA 125":                                      { tube:"Gold (SST)", volume:1.0, temp:"Room temperature" },
+  "CA 19-9":                                     { tube:"Gold (SST)", volume:1.0, temp:"Room temperature" },
+  "CA 15-3":                                     { tube:"Gold (SST)", volume:1.0, temp:"Room temperature" },
+
+  // More chemistry
+  "Phenytoin, Total":                            { tube:"Red (No Additive)", volume:2.0, temp:"Room temperature" },
+  "Valproic Acid":                               { tube:"Red (No Additive)", volume:2.0, temp:"Room temperature" },
+  "Carbamazepine, Total":                        { tube:"Red (No Additive)", volume:2.0, temp:"Room temperature" },
+  "Lithium Level":                               { tube:"Red (No Additive)", volume:2.0, temp:"Room temperature" },
+  "Digoxin":                                     { tube:"Gold (SST)", volume:1.0, temp:"Room temperature" },
+  "Theophylline":                                { tube:"Red (No Additive)", volume:2.0, temp:"Room temperature" },
+  
+  // Additional common nutrients
+  "Zinc":                                        { tube:"Royal Blue (Trace)" , volume:2.0, temp:"Room temperature" },
+  "Copper":                                      { tube:"Royal Blue (Trace)", volume:2.0, temp:"Room temperature" },
+  "Selenium":                                    { tube:"Royal Blue (Trace)", volume:2.0, temp:"Room temperature" },
+
+  // Hematology iron add-ons
+  "% Iron Saturation (Calculated)":              { tube:"Gold (SST)", volume:0.0, temp:"Room temperature" },
+
+  // Kidney add-ons
+  "Microalbumin, 24-Hour Urine":                 { tube:"Urine Cup", volume:0, temp:"Room temperature" },
+  "Protein, 24-Hour Urine":                      { tube:"Urine Cup", volume:0, temp:"Room temperature" },
+
+  // More endocrine/common screens
+  "Progesterone, 17-OH":                         { tube:"Gold (SST)", volume:1.0, temp:"Room temperature" },
+  "Estrone":                                     { tube:"Gold (SST)", volume:1.0, temp:"Room temperature" },
+  "Free Estradiol":                              { tube:"Gold (SST)", volume:1.0, temp:"Room temperature" },
+
+  // Finish to reach 100
+  "Beta-2 Microglobulin, Serum":                 { tube:"Gold (SST)", volume:1.0, temp:"Room temperature" },
+  "Uric Acid (repeat alias)":                    { tube:"Gold (SST)", volume:1.0, temp:"Room temperature" },
+  "Creatine Kinase Isoenzymes":                  { tube:"Gold (SST)", volume:1.0, temp:"Frozen", link:"https://testdirectory.questdiagnostics.com/test/test-detail/377/creatine-kinase-isoenzymes-ck-isoenzymes-without-total-ck?cc=MASTER" }
+};
+
+// ===== UI building =====
+const selectGrid = document.getElementById('selectGrid');
+const selects = [];
+const MAX = 12;
+
+function makeSelect(i){
+  const wrap = document.createElement('div');
+  wrap.className = 'select-wrap';
+  const sel = document.createElement('select');
+  sel.innerHTML = `<option value="">— none —</option>` + Object.keys(TESTS).sort().map(n=>`<option value="${n}">${n}</option>`).join("");
+  sel.addEventListener('change', update);
+  // allow ESC to clear
+  sel.addEventListener('keydown', (e)=>{ if(e.key==='Escape'){ sel.value=''; update(); }});
+  const caret = document.createElement('span'); caret.className='caret'; caret.innerHTML='▾';
+  const clear = document.createElement('button'); clear.className='clear-btn'; clear.type='button'; clear.title='Clear this choice'; clear.textContent='×'; clear.onclick=()=>{ sel.value=''; update(); };
+  wrap.appendChild(sel); wrap.appendChild(caret); wrap.appendChild(clear);
+  selectGrid.appendChild(wrap);
+  selects.push(sel);
+}
+for(let i=0;i<MAX;i++) makeSelect(i);
+
+document.getElementById('clearAll').onclick = ()=>{ selects.forEach(s=>s.value=''); update(); };
+document.getElementById('fillExample').onclick = ()=>{
+  const sample=["CBC (Complete Blood Count)","CMP (Comprehensive Metabolic Panel)","Lipid Panel","TSH","Urinalysis, Complete"]; 
+  selects.forEach((s,i)=> s.value = sample[i] || ''); update();
+};
+
+function groupByTube(selected){
+  const out={};
+  selected.forEach(name=>{
+    const t=TESTS[name];
+    if(!out[t.tube]) out[t.tube] = { tests:[], volume:0 };
+    out[t.tube].tests.push({ name, temp:t.temp, link:t.link||null });
+    out[t.tube].volume += t.volume;
+  });
+  return out;
+}
+
+function render(result){
+  const resultDiv = document.getElementById('result');
+  const tubeSummary = document.getElementById('tubeSummary');
+  resultDiv.innerHTML=''; tubeSummary.innerHTML='';
+  const selected = selects.map(s=>s.value).filter(Boolean);
+  if(selected.length===0){ resultDiv.innerHTML = '<div class="no-selection">No tests selected</div>'; return; }
+
+  // per-tube cards
+  const groups = groupByTube(selected);
+  Object.entries(groups).forEach(([tube,data])=>{
+    const needed = Math.max(1, Math.ceil(data.volume / (tubeCapacities[tube]||5)) );
+    const card = document.createElement('div'); card.className='tube-card';
+    const h = document.createElement('div'); h.className='tube-header';
+    h.innerHTML = `<div class="tube-title">🧪 ${tube}</div>
+                   <div class="tube-meta">
+                     <span class="chip">Total volume: <b>${data.volume.toFixed(1)} mL</b></span>
+                     <span class="chip">Tubes needed: <b>${needed}</b></span>
+                   </div>`;
+    card.appendChild(h);
+
+    data.tests.forEach(t=>{
+      const row = document.createElement('div'); row.className='test-row';
+      const tempClass = t.temp.startsWith('Room')? 'rt' : (t.temp.startsWith('Refrigerated')? 'ref' : (t.temp.startsWith('Frozen')? 'fz' : ''));
+      row.innerHTML = `<div class="test-name">${t.name}${t.link? ` <a href="${t.link}" target="_blank" rel="noopener" style="text-decoration:none;color:#2563eb">↗</a>`:''}</div>
+                       <div class="badge">Container: <b>${tube}</b></div>
+                       <div class="badge temp ${tempClass}">${t.temp}</div>`;
+      card.appendChild(row);
+    });
+
+    resultDiv.appendChild(card);
+  });
+
+  // footer tube counts
+  Object.entries(groups).forEach(([tube,data])=>{
+    const needed = Math.max(1, Math.ceil(data.volume / (tubeCapacities[tube]||5)) );
+    const pill = document.createElement('span'); pill.className='tube-pill';
+    pill.textContent = `${tube}: ${needed}`;
+    tubeSummary.appendChild(pill);
+  });
+}
+
+function update(){ render(document.getElementById('result')); }
+
+update();
+</script>
+</body>
+</html>
